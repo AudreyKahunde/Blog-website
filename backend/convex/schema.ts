@@ -7,5 +7,6 @@ export default defineSchema({
     content: v.string(),
     author: v.string(),
     published: v.boolean(),
+    imageId: v.optional(v.id("_storage")),
   }).index("by_published", ["published"]),
 });
