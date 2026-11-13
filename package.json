@@ -1,0 +1,12 @@
+{
+  "name": "blog",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently -n \"backend,frontend\" -c \"blue,green\" \"pnpm --dir backend exec convex dev\" \"pnpm --dir frontend dev\"",
+    "dev:frontend": "pnpm --dir frontend dev",
+    "dev:backend": "pnpm --dir backend exec convex dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0"
+  }
+}
