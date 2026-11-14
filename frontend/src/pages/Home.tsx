@@ -38,18 +38,17 @@ export function Home() {
               alt="Kahunde Audrey" 
               className="object-cover w-full h-full"
             />
-            
-            {/* 1. The Softer Whitish Toning (Gradient) */}
+
             <div className="absolute inset-x-0 bottom-0 h-1/2 bg-gradient-to-t from-white/70 via-white/30 to-transparent pointer-events-none" />
 
-            {/* 2. The White Line */}
+          
             <div className="absolute bottom-4 left-4 right-4 h-3 bg-white/90 rounded-full shadow-sm backdrop-blur-sm" />
           </div>
 
           <div>
             <h3 className="font-sans font-bold text-lg text-slate-900">Kahunde Audrey</h3>
             <p className="text-sm text-slate-500 leading-relaxed mt-1">
-              Data Scientist, Machine Learning Engineer , ML & AI enthusiast
+             Aspiring Data Scientist, Machine Learning & AI Enthusiast
             </p>
           </div>
         </div>

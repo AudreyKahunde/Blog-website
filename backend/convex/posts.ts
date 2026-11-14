@@ -51,3 +51,10 @@ export const publish = mutation({
     await ctx.db.patch(args.id, { published: true });
   },
 });
+
+export const getPostById = query({
+  args: { id: v.id("posts") },
+  handler: async (ctx, args) => {
+    return await ctx.db.get(args.id);
+  },
+});

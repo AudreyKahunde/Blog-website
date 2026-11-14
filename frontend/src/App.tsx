@@ -2,8 +2,9 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navbar } from "./components/Navbar";
 import { Footer } from "./components/Footer";
 import { Home } from "./pages/Home";
+import { BlogDetailsPage } from "./pages/BlogDetailsPage";
 
-// Import the Admin layout and pages you just created
+// Import the Admin layout and pages
 import { AdminLayout } from "./components/AdminLayout";
 import { AdminBlogsPage } from "./pages/admin/AdminBlogsPage";
 import { AdminTransactionsPage } from "./pages/admin/AdminTransactionsPage";
@@ -26,9 +27,16 @@ function App() {
               </>
             } />
 
-            {/* ADMIN ROUTES (Uses the new Admin Layout */}
-            {/* Note: Because this is inside your existing wrapper, the Admin sidebar 
-                will sit nicely inside the white board you created */}
+            {/* BLOG DETAILS ROUTE */}
+            <Route path="/blog/:id" element={
+              <>
+                <Navbar />
+                <main className="flex-1"><BlogDetailsPage /></main>
+                <Footer />
+              </>
+            } />
+
+            {/* ADMIN ROUTES (Uses the Admin Layout) */}
             <Route path="/admin" element={<AdminLayout />}>
               <Route index element={<AdminBlogsPage />} />
               <Route path="transactions" element={<AdminTransactionsPage />} />
