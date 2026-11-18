@@ -25,26 +25,28 @@ export const getImageUrl = query({
   },
 });
 
-// 4. Create a new post (now accepts an optional imageId)
+// 4. Create a new post
 export const create = mutation({
   args: {
     title: v.string(),
+    subtitle: v.optional(v.string()),
     content: v.string(),
     author: v.string(),
-    imageId: v.optional(v.id("_storage")), // <-- Added imageId here
+    imageId: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("posts", {
       title: args.title,
+      subtitle: args.subtitle,
       content: args.content,
       author: args.author,
-      published: true, // Set to true so it shows up immediately
+      published: true,
       imageId: args.imageId,
     });
   },
 });
 
-// 5. Publish an existing post (kept from your original code)
+// 5. Publish an existing post
 export const publish = mutation({
   args: { id: v.id("posts") },
   handler: async (ctx, args) => {
@@ -52,6 +54,7 @@ export const publish = mutation({
   },
 });
 
+// 6. Get a single post by ID
 export const getPostById = query({
   args: { id: v.id("posts") },
   handler: async (ctx, args) => {

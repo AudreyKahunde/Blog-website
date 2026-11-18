@@ -16,7 +16,6 @@ function App() {
     <BrowserRouter>
       <div className="min-h-screen bg-white font-sans text-slate-900">
         <div className="mx-auto max-w-[10000px] bg-white border overflow-hidden min-h-screen flex flex-col">
-          
           <Routes>
             {/* PUBLIC ROUTES (Uses your existing Navbar & Footer) */}
             <Route path="/" element={
@@ -27,8 +26,8 @@ function App() {
               </>
             } />
 
-            {/* BLOG DETAILS ROUTE */}
-            <Route path="/blog/:id" element={
+            {/* BLOG DETAILS ROUTE — matches /blog?id=... */}
+            <Route path="/blog" element={
               <>
                 <Navbar />
                 <main className="flex-1"><BlogDetailsPage /></main>
@@ -44,7 +43,6 @@ function App() {
               <Route path="new" element={<AdminEditor />} />
             </Route>
           </Routes>
-
         </div>
       </div>
     </BrowserRouter>
