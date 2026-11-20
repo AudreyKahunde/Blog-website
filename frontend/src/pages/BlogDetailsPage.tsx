@@ -1,10 +1,19 @@
+import { useState, useEffect } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 import { useQuery } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import { ConvexImage } from "../components/ConvexImage";
-import { ArrowLeft, Calendar, Clock } from "lucide-react";
+import { ArrowLeft, Calendar, Clock, User } from "lucide-react";
+import { PaywallComponent } from "../components/PaywallComponent";
+import { Badge } from "@/components/ui/badge";
 
-// Helper component for the large blue first letter (Drop Cap)
+function calculateReadTime(content: string) {
+  const wordsPerMinute = 200;
+  const words = content.trim().split(/\s+/).length;
+  const minutes = Math.ceil(words / wordsPerMinute);
+  return `${minutes} min read`;
+}
+
 function DropCapParagraph({ text }: { text: string }) {
   const firstLetter = text.charAt(0);
   const restOfText = text.slice(1);
@@ -21,126 +30,111 @@ function DropCapParagraph({ text }: { text: string }) {
 export function BlogDetailsPage() {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
+  
+  const [userId, setUserId] = useState<string>("");
+  const [forceUpdate, setForceUpdate] = useState(0); 
+
+  useEffect(() => {
+    let localId = localStorage.getItem("reader_id");
+    if (!localId) {
+      localId = "user_" + Math.random().toString(36).substring(2, 9);
+      localStorage.setItem("reader_id", localId);
+    }
+    setUserId(localId);
+  }, []);
 
   const post = useQuery(
     api.posts.getPostById,
-    id ? { id: id as any } : "skip"
+    id && userId ? { id: id as any, userId } : "skip"
   );
 
-  if (!id) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-slate-500 gap-4">
-        <p>Article not found.</p>
-        <Link to="/" className="px-4 py-2 border rounded-md hover:bg-slate-50 transition-colors">
-          Go back home
-        </Link>
-      </div>
-    );
-  }
+  if (!id) return <div className="text-center py-20">Article not found.</div>;
+  if (post === undefined || !userId) return <div className="text-center py-20 animate-pulse">Loading article...</div>;
+  if (post === null) return <div className="text-center py-20">Article not found.</div>;
 
-  if (post === undefined) {
-    return (
-      <div className="min-h-screen flex items-center justify-center text-slate-500 animate-pulse">
-        Loading article...
-      </div>
-    );
-  }
-
-  if (post === null) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-slate-500 gap-4">
-        <p>Article not found.</p>
-        <Link to="/" className="px-4 py-2 border rounded-md hover:bg-slate-50 transition-colors">
-          Go back home
-        </Link>
-      </div>
-    );
-  }
-
-  // Split content into paragraphs, filtering out empty lines
+  const readTime = calculateReadTime(post.content);
   const paragraphs = post.content.split("\n").filter((p) => p.trim() !== "");
 
   return (
-    <div className="bg-white min-h-screen">
-      <article className="max-w-3xl mx-auto px-6 py-16 md:py-24">
+    // Just the <main> tag here — App.tsx handles the Navbar and Footer!
+    <main className="flex-1 w-full bg-white">
+      <article className="max-w-3xl mx-auto px-6 py-12 md:py-20">
         
-        {/* Back Button */}
-        <Link
-          to="/"
-          className="inline-flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 mb-10 transition-colors px-4 py-2 border border-slate-200 rounded-full shadow-sm hover:shadow-md"
-        >
+        <Link to="/" className="inline-flex items-center text-sm font-medium text-slate-600 hover:text-slate-900 mb-8 px-4 py-2 border border-slate-200 rounded-full shadow-sm">
           <ArrowLeft className="mr-2 size-4" /> Back to blogs
         </Link>
 
-        {/* Category, Price & Meta Row */}
-        <div className="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-500 mb-6">
-          <div className="flex items-center gap-2">
-            <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded-full">
-              Article
-            </span>
-            <span className="bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full">
+        <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-slate-500 mb-6">
+          <Badge variant="outline" className="border-slate-200 text-slate-600 bg-slate-50 rounded-full px-3 py-1">
+            {post.category || "Article"}
+          </Badge>
+          
+          {post.price && post.price > 0 ? (
+            <Badge className="bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 rounded-full px-3 py-1">
+              Premium - {post.currency} {post.price.toLocaleString()}
+            </Badge>
+          ) : (
+            <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 rounded-full px-3 py-1">
               Free
-            </span>
-          </div>
-          <span className="flex items-center gap-1.5">
-            <Calendar className="size-3.5" /> Recent
-          </span>
-          <span className="flex items-center gap-1.5">
-            <Clock className="size-3.5" /> 4 min read
-          </span>
+            </Badge>
+          )}
+          
+          <span className="flex items-center gap-1.5"><Calendar className="size-3.5" /> Recent</span>
+          <span className="flex items-center gap-1.5"><Clock className="size-3.5" /> {readTime}</span>
         </div>
 
-        {/* Title */}
         <h1 className="font-['Playfair_Display'] text-4xl md:text-5xl lg:text-6xl leading-[1.1] tracking-tight mb-4 text-slate-900">
           {post.title}
         </h1>
-
-        {/* Subtitle */}
+        
         {post.subtitle && (
-          <p className="text-lg md:text-xl text-slate-500 leading-relaxed mb-10">
-            {post.subtitle}
-          </p>
+          <p className="text-lg md:text-xl text-slate-500 leading-relaxed mb-6">{post.subtitle}</p>
         )}
 
-        {/* Hero Image */}
+        
+
+        <div className="flex items-center gap-3 py-4 border-y border-slate-100 mb-8">
+          <div className="w-10 h-10 rounded-full bg-slate-200 flex items-center justify-center text-slate-500">
+            <User className="size-5" />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-slate-900">{post.author}</p>
+            <p className="text-xs text-slate-500">Writer</p>
+          </div>
+        </div>
+
         {post.imageId && (
-          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-slate-100 mb-12">
-            <ConvexImage
-              storageId={post.imageId}
-              className="object-cover w-full h-full"
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-slate-100 mb-8">
+            <ConvexImage storageId={post.imageId} className="object-cover w-full h-full" />
+          </div>
+        )}
+
+        <div className="relative">
+          <div className="text-slate-600 leading-relaxed text-[17px] md:text-lg">
+            {paragraphs.map((paragraph, index) => {
+              if (index === 0) return <DropCapParagraph key={index} text={paragraph} />;
+              return <p key={index} className="mb-6">{paragraph}</p>;
+            })}
+          </div>
+
+          {post.isLocked && (
+            <div className="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white to-transparent pointer-events-none" />
+          )}
+        </div>
+
+        {post.isLocked && (
+          <div className="mt-12 mb-16 border-t border-slate-100 pt-10">
+            <PaywallComponent 
+              amount={post.price!} 
+              currency={post.currency || "UGX"}
+              postId={post._id}
+              userId={userId}
+              onSuccess={() => setForceUpdate(prev => prev + 1)} 
             />
           </div>
         )}
 
-        {/* Blog Content */}
-        <div className="text-slate-600 leading-relaxed text-[17px] md:text-lg">
-          {paragraphs.map((paragraph, index) => {
-            // If it's the first paragraph, apply the blue Drop Cap
-            if (index === 0) {
-              return <DropCapParagraph key={index} text={paragraph} />;
-            }
-
-            // Check if the paragraph is short (like a heading) or just standard text
-            const isHeading = paragraph.length < 60 && !paragraph.endsWith('.');
-            
-            if (isHeading) {
-              return (
-                <h2 key={index} className="font-['Playfair_Display'] text-2xl md:text-3xl text-slate-900 mt-10 mb-4">
-                  {paragraph}
-                </h2>
-              );
-            }
-
-            // Standard paragraph
-            return (
-              <p key={index} className="mb-6">
-                {paragraph}
-              </p>
-            );
-          })}
-        </div>
-
       </article>
-    </div>
+    </main>
   );
 }

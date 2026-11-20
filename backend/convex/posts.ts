@@ -25,7 +25,7 @@ export const getImageUrl = query({
   },
 });
 
-// 4. Create a new post
+// 4. Create a new post (Now accepts category, price, and imageId)
 export const create = mutation({
   args: {
     title: v.string(),
@@ -33,6 +33,9 @@ export const create = mutation({
     content: v.string(),
     author: v.string(),
     imageId: v.optional(v.id("_storage")),
+    price: v.optional(v.number()),
+    currency: v.optional(v.string()),
+    category: v.optional(v.string()), // Added category
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("posts", {
@@ -42,22 +45,79 @@ export const create = mutation({
       author: args.author,
       published: true,
       imageId: args.imageId,
+      price: args.price,
+      currency: args.currency,
+      category: args.category, // Saving category
     });
   },
 });
 
-// 5. Publish an existing post
-export const publish = mutation({
-  args: { id: v.id("posts") },
+// 5. Get Post By ID (WITH PAYWALL LOGIC)
+export const getPostById = query({
+  args: { 
+    id: v.id("posts"),
+    userId: v.optional(v.string()), 
+  },
   handler: async (ctx, args) => {
-    await ctx.db.patch(args.id, { published: true });
+    const post = await ctx.db.get(args.id);
+    if (!post) return null;
+
+    // If free, send everything
+    if (!post.price || post.price <= 0) {
+      return { ...post, isLocked: false };
+    }
+
+    // If paid, check if they own it
+    let hasPaid = false;
+    const userId = args.userId;
+    if (userId) {
+      const purchase = await ctx.db
+        .query("purchases")
+        .withIndex("by_user_and_post", (q) => 
+          q.eq("userId", userId).eq("postId", post._id)
+        )
+        .first();
+      hasPaid = !!purchase;
+    }
+
+    // If they own it, send everything
+    if (hasPaid) {
+      return { ...post, isLocked: false };
+    }
+
+    // If they haven't paid, send only the first 500 characters
+    const teaserContent = post.content.substring(0, 500) + "...";
+    return { 
+      ...post, 
+      content: teaserContent,
+      isLocked: true
+    };
   },
 });
 
-// 6. Get a single post by ID
-export const getPostById = query({
-  args: { id: v.id("posts") },
+// 6. Record a Purchase
+export const recordPurchase = mutation({
+  args: {
+    postId: v.id("posts"),
+    userId: v.string(),
+    amount: v.number(),
+  },
   handler: async (ctx, args) => {
-    return await ctx.db.get(args.id);
+    // Prevent duplicate purchases
+    const existing = await ctx.db
+      .query("purchases")
+      .withIndex("by_user_and_post", (q) => 
+        q.eq("userId", args.userId).eq("postId", args.postId)
+      )
+      .first();
+      
+    if (existing) return;
+
+    await ctx.db.insert("purchases", {
+      postId: args.postId,
+      userId: args.userId,
+      amount: args.amount,
+      purchasedAt: Date.now(),
+    });
   },
 });

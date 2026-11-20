@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
-  Calendar,
   Clock,
   Instagram,
   Linkedin,
@@ -16,12 +15,20 @@ import { useQuery } from "convex/react";
 import { api } from "../../../backend/convex/_generated/api";
 import { ConvexImage } from "../components/ConvexImage";
 
+// Helper function to calculate reading time
+function calculateReadTime(content: string) {
+  const wordsPerMinute = 200;
+  const words = content.trim().split(/\s+/).length;
+  const minutes = Math.ceil(words / wordsPerMinute);
+  return `${minutes} min read`;
+}
+
 export function Home() {
   const navigate = useNavigate();
   const posts = useQuery(api.posts.listPublished);
 
   return (
-    <div className="flex flex-col  text-slate-900">
+    <div className="flex flex-col text-slate-900">
       {/* 1. Hero Section */}
       <section className="px-6 md:px-12 py-16 md:py-24 max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-[1fr_1.2fr] gap-12 md:gap-20 items-start">
         {/* Left: Image & Name */}
@@ -189,18 +196,24 @@ export function Home() {
                 {/* Body */}
                 <div className="flex flex-1 flex-col p-5">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-0.5 text-[10px] font-medium text-slate-500">
+                    <Badge variant="outline" className="text-[10px] font-medium border-slate-200 text-slate-500 rounded-full px-2.5">
                       Article
-                    </span>
+                    </Badge>
 
-                    <span className="inline-flex items-center rounded-full border border-emerald-200/80 bg-emerald-50 px-2.5 py-0.5 text-[10px] font-semibold text-emerald-700">
-                      FREE
-                    </span>
+                    {post.price && post.price > 0 ? (
+                      <Badge className="bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 text-[10px] font-semibold rounded-full px-2.5">
+                        PREMIUM &middot; {post.currency || "UGX"} {post.price.toLocaleString()}
+                      </Badge>
+                    ) : (
+                      <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-[10px] font-semibold rounded-full px-2.5">
+                        FREE
+                      </Badge>
+                    )}
                   </div>
 
                   <div className="mt-3 flex items-center gap-1.5 text-[11px] text-slate-500">
                     <Clock aria-hidden="true" className="size-3 shrink-0" />
-                    <span>Recent &middot; 5 min read</span>
+                    <span>Recent &middot; {calculateReadTime(post.content)}</span>
                   </div>
 
                   <h3 className="mt-2 font-['Playfair_Display'] text-[17px] leading-snug font-semibold tracking-tight text-slate-900">
@@ -215,7 +228,7 @@ export function Home() {
                     <Button
                       type="button"
                       variant="link"
-                      size="xs"
+                      size="sm"
                       onClick={() => navigate(`/blog?id=${post._id}`)}
                       className="h-auto gap-1.5 p-0 text-xs font-medium text-blue-600 hover:no-underline"
                     >
